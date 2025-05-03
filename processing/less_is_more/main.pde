@@ -212,7 +212,7 @@ void draw() {
 
   // Draws background
   image(BACKGROUND, 0, 0);
-
+  image(SILOUHETTE2, 0, 0);
 
   // Draws black and white effect
   for (int step = 0; step <= iMAX_STEPS; step++) {
@@ -232,9 +232,6 @@ void draw() {
           round((0.65 + (Y_multiplier * mid_farness)) * flOUTPUT_H * step_progress),
           round(flOUTPUT_W * step_progress_inv),
           round(flOUTPUT_H * step_progress_inv));
-    } else {
-      tint(0, 0, 0, 255);
-      image(SILOUHETTE2, 0, 0);
     }
   }
 
