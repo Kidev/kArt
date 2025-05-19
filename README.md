@@ -12,6 +12,7 @@ For the projects not listed here, it's most likely that they were made entirely 
 
 #### Made with [Python](https://www.python.org)
 - [Quantum Dance](./python/quantum_dance/) [🖼️](https://www.instagram.com/p/CUd66S8KI5u/)
+- [Pixel art (tool)](./python/pixel_art/) [:octocat:️️](https://github.com/Kidev/Kerfur)
 
 ## Licenses
 All artworks are licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0)  
