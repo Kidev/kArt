@@ -6,6 +6,8 @@ class DialogFramework {
         this.typeSpeed = 20; // Faster and smoother - milliseconds per character
         this.currentText = '';
         this.typingTimeout = null;
+        this.currentBackgroundImage = null; // Track current background image
+        this.loadedSounds = new Map(); // Cache for loaded audio files
 
         // Character definitions - only Ashley and Andrew for now
         this.characters = {
@@ -20,7 +22,92 @@ class DialogFramework {
         };
 
         this.initializeEventListeners();
+        this.initializeAudio();
         this.updateDebugInfo();
+    }
+
+    // Initialize audio system using HTML5 Audio (works with local files)
+    async initializeAudio() {
+        try {
+            // Test if we can create audio elements
+            const testAudio = new Audio();
+            console.log('HTML5 Audio initialized successfully');
+        } catch (error) {
+            console.warn('Audio not supported:', error);
+        }
+    }
+
+    // Load and cache audio file using HTML5 Audio
+    async loadSound(soundPath) {
+        if (this.loadedSounds.has(soundPath)) {
+            return this.loadedSounds.get(soundPath);
+        }
+
+        try {
+            const audio = new Audio('sounds/' + soundPath);
+            
+            // Return a promise that resolves when audio can play
+            return new Promise((resolve, reject) => {
+                const onCanPlay = () => {
+                    audio.removeEventListener('canplaythrough', onCanPlay);
+                    audio.removeEventListener('error', onError);
+                    this.loadedSounds.set(soundPath, audio);
+                    resolve(audio);
+                };
+                
+                const onError = (error) => {
+                    audio.removeEventListener('canplaythrough', onCanPlay);
+                    audio.removeEventListener('error', onError);
+                    console.warn(`Failed to load sound: ${soundPath}`, error);
+                    resolve(null); // Resolve with null instead of rejecting
+                };
+
+                audio.addEventListener('canplaythrough', onCanPlay);
+                audio.addEventListener('error', onError);
+                
+                // Set a timeout to avoid hanging forever
+                setTimeout(() => {
+                    if (!this.loadedSounds.has(soundPath)) {
+                        audio.removeEventListener('canplaythrough', onCanPlay);
+                        audio.removeEventListener('error', onError);
+                        console.warn(`Timeout loading sound: ${soundPath}`);
+                        resolve(null);
+                    }
+                }, 5000);
+            });
+        } catch (error) {
+            console.warn(`Failed to create audio for: ${soundPath}`, error);
+            return null;
+        }
+    }
+
+    // Play sound using HTML5 Audio
+    async playSound(soundPath, volume = 1.0) {
+        if (!soundPath) return;
+
+        try {
+            let audio = await this.loadSound(soundPath);
+            
+            if (!audio) {
+                console.warn(`Could not load sound: ${soundPath}`);
+                return;
+            }
+
+            // Clone the audio for multiple simultaneous plays
+            const audioClone = audio.cloneNode();
+            audioClone.volume = Math.max(0, Math.min(1, volume)); // Clamp volume between 0 and 1
+            
+            // Play the sound
+            const playPromise = audioClone.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn(`Failed to play sound: ${soundPath}`, error);
+                });
+            }
+        } catch (error) {
+            console.warn(`Error playing sound: ${soundPath}`, error);
+        }
     }
 
     // Add a scene to the timeline
@@ -30,7 +117,10 @@ class DialogFramework {
             image: options.image || null,
             speaker: options.speaker || '',   // Empty string for narrator
             text: options.text || '',
-            fade: options.fade !== undefined ? options.fade : true  // Default to fade
+            fade: options.fade !== undefined ? options.fade : true,  // Default to fade
+            sound: options.sound || null,     // Sound file to play
+            soundVolume: options.soundVolume || 1.0,  // Sound volume (0.0 to 1.0)
+            soundDelay: options.soundDelay || 0       // Delay before playing sound (milliseconds)
         };
         this.scenes.push(scene);
         this.updateDebugInfo();
@@ -78,8 +168,19 @@ class DialogFramework {
 
         const scene = this.scenes[index];
 
-        // Show image first if specified
-        if (scene.image) {
+        // Schedule sound playback with delay if specified
+        if (scene.sound) {
+            if (scene.soundDelay > 0) {
+                setTimeout(() => {
+                    this.playSound(scene.sound, scene.soundVolume);
+                }, scene.soundDelay);
+            } else {
+                this.playSound(scene.sound, scene.soundVolume);
+            }
+        }
+
+        // Show image first if specified and different from current
+        if (scene.image && scene.image !== this.currentBackgroundImage) {
             this.showImage(scene.image);
         }
 
@@ -113,6 +214,9 @@ class DialogFramework {
 
     // Show background image with fade transition
     showImage(imageSrc) {
+        // Update current background image tracker
+        this.currentBackgroundImage = imageSrc;
+
         // Remove existing active images
         const existingImages = document.querySelectorAll('.background-image.active');
         existingImages.forEach(img => img.classList.remove('active'));
@@ -178,20 +282,15 @@ class DialogFramework {
     async fadeOutDialog() {
         const dialogContainer = document.getElementById('dialogContainer');
         if (dialogContainer.classList.contains('active')) {
-            dialogContainer.style.opacity = '0';
-            await this.wait(500); // Wait for fade transition
             dialogContainer.classList.remove('active');
-            dialogContainer.style.opacity = '1';
+            await this.wait(500); // Wait for fade transition
         }
     }
 
     // Fade in dialog
     async fadeInDialog() {
         const dialogContainer = document.getElementById('dialogContainer');
-        dialogContainer.style.opacity = '0';
         dialogContainer.classList.add('active');
-        await this.wait(50); // Small delay for DOM update
-        dialogContainer.style.opacity = '1';
         await this.wait(500); // Wait for fade in
     }
 
@@ -329,6 +428,7 @@ class DialogFramework {
     reset() {
         this.currentScene = 0;
         this.isTyping = false;
+        this.currentBackgroundImage = null; // Reset image tracker
         this.hideDialog();
 
         // Remove all images

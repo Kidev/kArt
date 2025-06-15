@@ -38,7 +38,7 @@ body {
     position: absolute;
     bottom: 40px;
     left: 50%;
-    transform: translateX(-50%) translateY(150%);
+    transform: translateX(-50%);
     background-image: url('img/bg_dialog.png');
     background-size: contain;
     background-repeat: no-repeat;
@@ -46,13 +46,15 @@ body {
     width: 800px;
     height: 180px;
     padding: 30px 60px 40px 60px;
-    transition: transform 0.3s ease-out, opacity 0.5s ease-in-out;
+    transition: opacity 0.5s ease-in-out;
     z-index: 10;
-    opacity: 1;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .dialog-container.active {
-    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .dialog-content {
@@ -74,14 +76,13 @@ body {
 .speaker-line {
     color: #ffffff;
     font-weight: 600;
-    font-size: 1.4em;
+    font-size: 1.5em;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
 .text-line {
     color: #ffffff;
-    font-size: 1.35em;
-    line-height: 1.35;
+    font-size: 1.5em;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
     padding: 0 10px;
 }
