@@ -1,0 +1,76 @@
+<!--
+TCOAAL dialog generator
+
+By Alexandre 'kidev' Poumaroux
+
+Thanks a lot to Nemlei for 'The Coffin of Andy and Leyley'
+Hope you feel better now that you moved away from social media
+There is an army of people that love your game, and I'm part of it! :)
+Cheers
+
+No art (image, sound, font...) from the game will be provided for obvious reasons
+You have to source them yourself by owning the game
+
+Copyright (C) 2025 Alexandre 'kidev' Poumaroux
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kidev's TCOAAL dialog creator'</title>
+    <link href="fonts/Faustina-Regular.ttf" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        
+        <div class="dialog-container" id="dialogContainer">
+            <div class="dialog-content">
+                <div class="dialog-line speaker-line" id="speakerLine"></div>
+                <div class="dialog-line text-line" id="textLine1"></div>
+                <div class="dialog-line text-line" id="textLine2"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="dialogFramework.start()">Start</button>
+            <button onclick="dialogFramework.next()">Next</button>
+            <button onclick="dialogFramework.reset()">Reset</button>
+            <button onclick="dialogFramework.skipText()">Skip Text</button>
+        </div>
+
+        <div class="debug-info" id="debugInfo">
+            Scene: 0 / 0
+        </div>
+    </div>
+
+    <script src="js/dialog.js"></script>
+    <script src="js/sequence.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof setupScene === 'function') {
+                setupScene();
+            } else if (typeof setupScenes === 'function') {
+                setupScenes();
+            } else {
+                console.warn('No setup function found in sequence.js. Please define setupScene() or setupScenes()');
+            }
+        });
+    </script>
+</body>
+</html>
