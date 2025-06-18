@@ -1,3 +1,131 @@
+class GlitchTextEffect {
+    constructor(element, config = {}) {
+        this.element = element;
+        this.originalText = '';
+        this.characters = [];
+        this.intervals = [];
+        this.isRunning = false;
+        this.isRevealed = false;
+        
+        // Configuration
+        this.config = {
+            scrambledColor: config.scrambledColor || '#ff4444',
+            realColor: config.realColor || '#44ff44',
+            changeSpeed: config.changeSpeed || 150,
+            realProbability: config.realProbability || 15,
+            autoStart: config.autoStart !== undefined ? config.autoStart : true
+        };
+
+        // Character sets for scrambling
+        this.scrambleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{}|\\:";\'<>?,./`~';
+        
+        if (this.element && this.element.textContent) {
+            this.setText(this.element.textContent);
+            if (this.config.autoStart) {
+                this.start();
+            }
+        }
+    }
+
+    setText(text) {
+        this.originalText = text;
+        this.setupCharacters();
+    }
+
+    setupCharacters() {
+        if (!this.element) return;
+        
+        this.element.innerHTML = '';
+        this.characters = [];
+
+        for (let i = 0; i < this.originalText.length; i++) {
+            const char = this.originalText[i];
+            const span = document.createElement('span');
+            span.className = 'glitch-char';
+            span.textContent = char === ' ' ? '\u00A0' : char;
+            span.style.color = this.config.scrambledColor;
+            span.style.display = 'inline-block';
+            span.style.fontFamily = 'monospace';
+            span.style.width = '1ch'; // Fixed character width
+            span.style.textAlign = 'center';
+            
+            this.element.appendChild(span);
+            this.characters.push({
+                element: span,
+                originalChar: char,
+                currentChar: char
+            });
+        }
+    }
+
+    getRandomChar() {
+        return this.scrambleChars[Math.floor(Math.random() * this.scrambleChars.length)];
+    }
+
+    shouldShowReal() {
+        return Math.random() * 100 < this.config.realProbability;
+    }
+
+    updateCharacter(charObj) {
+        if (charObj.originalChar === ' ') {
+            return;
+        }
+
+        if (this.isRevealed || this.shouldShowReal()) {
+            charObj.currentChar = charObj.originalChar;
+            charObj.element.textContent = charObj.originalChar;
+            charObj.element.style.color = this.config.realColor;
+        } else {
+            charObj.currentChar = this.getRandomChar();
+            charObj.element.textContent = charObj.currentChar;
+            charObj.element.style.color = this.config.scrambledColor;
+        }
+    }
+
+    start() {
+        if (this.isRunning) {
+            this.stop();
+        }
+
+        this.isRunning = true;
+        this.isRevealed = false;
+
+        this.characters.forEach((charObj, index) => {
+            if (charObj.originalChar !== ' ') {
+                const interval = setInterval(() => {
+                    if (this.isRunning) {
+                        this.updateCharacter(charObj);
+                    }
+                }, this.config.changeSpeed + (Math.random() * 50));
+
+                this.intervals.push(interval);
+            }
+        });
+    }
+
+    stop() {
+        this.isRunning = false;
+        this.intervals.forEach(interval => clearInterval(interval));
+        this.intervals = [];
+    }
+
+    reveal() {
+        this.isRevealed = true;
+        this.characters.forEach(charObj => {
+            charObj.element.textContent = charObj.originalChar === ' ' ? '\u00A0' : charObj.originalChar;
+            charObj.element.style.color = this.config.realColor;
+        });
+    }
+
+    destroy() {
+        this.stop();
+        this.characters = [];
+        if (this.element) {
+            this.element.innerHTML = '';
+        }
+    }
+}
+
 class DialogFramework {
     constructor() {
         this.scenes = [];
@@ -8,6 +136,8 @@ class DialogFramework {
         this.typingTimeout = null;
         this.currentBackgroundImage = null; // Track current background image
         this.loadedSounds = new Map(); // Cache for loaded audio files
+        this.glitchEffects = []; // Track all glitch effects for cleanup
+        this.speakerGlitch = null; // Track speaker name glitch effect
 
         // Character definitions - only Ashley and Andrew for now
         this.characters = {
@@ -120,7 +250,8 @@ class DialogFramework {
             fade: options.fade !== undefined ? options.fade : true,  // Default to fade
             sound: options.sound || null,     // Sound file to play
             soundVolume: options.soundVolume || 1.0,  // Sound volume (0.0 to 1.0)
-            soundDelay: options.soundDelay || 0       // Delay before playing sound (milliseconds)
+            soundDelay: options.soundDelay || 0,       // Delay before playing sound (milliseconds)
+            censorSpeaker: options.censorSpeaker !== undefined ? options.censorSpeaker : true  // Whether to apply glitch to speaker name
         };
         this.scenes.push(scene);
         this.updateDebugInfo();
@@ -194,11 +325,11 @@ class DialogFramework {
             if (scene.fade) {
                 // Fade out current dialog, then fade in new one
                 await this.fadeOutDialog();
-                this.showDialog(scene.speaker, scene.text);
+                this.showDialog(scene.speaker, scene.text, true, scene.censorSpeaker);
                 await this.fadeInDialog();
             } else {
                 // Keep dialog box, just replace text
-                this.showDialog(scene.speaker, scene.text, false);
+                this.showDialog(scene.speaker, scene.text, false, scene.censorSpeaker);
             }
         } else {
             // If no text, hide dialog
@@ -241,23 +372,110 @@ class DialogFramework {
         }, 1100);
     }
 
-    // Show dialog with typewriter effect
-    showDialog(speaker, text, showContainer = true) {
+    // Parse HTML-like tags and apply formatting
+    parseFormattedText(text) {
+        // Create a temporary div to parse the text
+        const tempDiv = document.createElement('div');
+        
+        // Replace custom tags with HTML equivalents
+        let formattedText = text
+            .replace(/<b>/g, '<strong>')
+            .replace(/<\/b>/g, '</strong>')
+            .replace(/<i>/g, '<em>')
+            .replace(/<\/i>/g, '</em>')
+            .replace(/<u>/g, '<span style="text-decoration: underline;">')
+            .replace(/<\/u>/g, '</span>');
+        
+        // Handle glitch tags separately
+        const glitchRegex = /<glitch([^>]*)>(.*?)<\/glitch>/g;
+        let match;
+        let glitchCounter = 0;
+        
+        while ((match = glitchRegex.exec(formattedText)) !== null) {
+            const attributes = match[1];
+            const glitchText = match[2];
+            const glitchId = `glitch-${Date.now()}-${glitchCounter++}`;
+            
+            // Parse glitch attributes (optional)
+            let glitchConfig = {
+                scrambledColor: '#ff4444',
+                realColor: '#44ff44',
+                changeSpeed: 150,
+                realProbability: 15
+            };
+            
+            // Simple attribute parsing
+            if (attributes) {
+                const colorMatch = attributes.match(/color="([^"]+)"/);
+                if (colorMatch) glitchConfig.realColor = colorMatch[1];
+                
+                const scrambledMatch = attributes.match(/scrambled="([^"]+)"/);
+                if (scrambledMatch) glitchConfig.scrambledColor = scrambledMatch[1];
+                
+                const speedMatch = attributes.match(/speed="([^"]+)"/);
+                if (speedMatch) glitchConfig.changeSpeed = parseInt(speedMatch[1]);
+            }
+            
+            formattedText = formattedText.replace(match[0], `<span class="glitch-container" data-glitch-id="${glitchId}" data-glitch-config='${JSON.stringify(glitchConfig)}'>${glitchText}</span>`);
+        }
+        
+        tempDiv.innerHTML = formattedText;
+        return tempDiv;
+    }
+
+    // Apply glitch effects to parsed elements
+    applyGlitchEffects(container) {
+        const glitchContainers = container.querySelectorAll('.glitch-container');
+        
+        glitchContainers.forEach(glitchContainer => {
+            const config = JSON.parse(glitchContainer.dataset.glitchConfig);
+            const glitchEffect = new GlitchTextEffect(glitchContainer, config);
+            this.glitchEffects.push(glitchEffect);
+        });
+    }
+
+    // Clean up all glitch effects
+    cleanupGlitchEffects() {
+        this.glitchEffects.forEach(effect => effect.destroy());
+        this.glitchEffects = [];
+        
+        if (this.speakerGlitch) {
+            this.speakerGlitch.destroy();
+            this.speakerGlitch = null;
+        }
+    }
+
+    // Show dialog with typewriter effect and formatting support
+    showDialog(speaker, text, showContainer = true, censorSpeaker = true) {
         const dialogContainer = document.getElementById('dialogContainer');
         const speakerLine = document.getElementById('speakerLine');
         const textLine1 = document.getElementById('textLine1');
         const textLine2 = document.getElementById('textLine2');
 
+        // Clean up previous glitch effects
+        this.cleanupGlitchEffects();
+
         // Clear previous content and styles
         speakerLine.className = 'dialog-line speaker-line';
-        speakerLine.textContent = '';
-        textLine1.textContent = '';
-        textLine2.textContent = '';
+        speakerLine.innerHTML = '';
+        textLine1.innerHTML = '';
+        textLine2.innerHTML = '';
 
-        // Set speaker info (Line 1)
+        // Set speaker info (Line 1) with optional glitch effect
         if (speaker && this.characters[speaker]) {
             speakerLine.textContent = speaker;
             speakerLine.classList.add(this.characters[speaker].class);
+            
+            // Apply glitch effect to speaker name only if censorSpeaker is true
+            if (censorSpeaker) {
+                this.speakerGlitch = new GlitchTextEffect(speakerLine, {
+                    scrambledColor: '#ff4444', // Red for error
+                    realColor: this.characters[speaker].color,
+                    changeSpeed: 120,
+                    realProbability: 20,
+                    autoStart: true
+                });
+            }
         }
 
         // Prepare text with quotes for characters, no quotes for narrator
@@ -334,7 +552,7 @@ class DialogFramework {
         return lines.slice(0, maxLines);
     }
 
-    // Typewriter effect for multiple lines (letter by letter)
+    // Typewriter effect for multiple lines (letter by letter) - main method
     async typeTextLines(elements, textLines) {
         this.isTyping = true;
         this.currentText = textLines.join(' ');
@@ -429,6 +647,7 @@ class DialogFramework {
         this.currentScene = 0;
         this.isTyping = false;
         this.currentBackgroundImage = null; // Reset image tracker
+        this.cleanupGlitchEffects(); // Clean up glitch effects
         this.hideDialog();
 
         // Remove all images
