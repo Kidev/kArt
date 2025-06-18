@@ -484,16 +484,34 @@ class DialogFramework {
             finalText = `"${text}"`;
         }
 
-        // Split text into lines that fit the dialog box
-        const textLines = this.wrapTextToLines(finalText, 2); // 2 lines available for text
+        // Check if text has formatting tags
+        const hasFormatting = finalText.includes('<');
 
-        // Show dialog container if needed
-        if (showContainer) {
-            dialogContainer.classList.add('active');
+        if (hasFormatting) {
+            // Parse the formatted text to get plain text for typing
+            const parsedContainer = this.parseFormattedText(finalText);
+            const plainText = parsedContainer.textContent || parsedContainer.innerText;
+            const textLines = this.wrapTextToLines(plainText, 2);
+
+            // Show dialog container if needed
+            if (showContainer) {
+                dialogContainer.classList.add('active');
+            }
+
+            // Type plain text first, then apply formatting
+            this.typeTextWithFormatting([textLine1, textLine2], textLines, parsedContainer);
+        } else {
+            // Simple text without formatting
+            const textLines = this.wrapTextToLines(finalText, 2);
+            
+            // Show dialog container if needed
+            if (showContainer) {
+                dialogContainer.classList.add('active');
+            }
+
+            // Use simple typing
+            this.typeTextLines([textLine1, textLine2], textLines);
         }
-
-        // Start typewriter effect for each line
-        this.typeTextLines([textLine1, textLine2], textLines);
     }
 
     // Fade out dialog
@@ -578,6 +596,164 @@ class DialogFramework {
         this.isTyping = false;
     }
 
+    // Type text with formatting - type plain text first, then apply formatting
+    async typeTextWithFormatting(elements, textLines, parsedContainer) {
+        this.isTyping = true;
+        this.currentText = textLines.join(' ');
+
+        // First, type the plain text normally
+        for (let lineIndex = 0; lineIndex < elements.length; lineIndex++) {
+            const element = elements[lineIndex];
+            const text = textLines[lineIndex] || '';
+
+            if (!text) continue;
+
+            element.textContent = '';
+
+            for (let i = 0; i < text.length; i++) {
+                if (!this.isTyping) break;
+
+                element.textContent += text[i];
+                await this.wait(this.typeSpeed);
+            }
+
+            if (!this.isTyping) break;
+        }
+
+        // After typing is complete, apply formatting
+        if (!this.isTyping) {
+            this.applyFormattingToLines(elements, textLines, parsedContainer);
+        }
+
+        this.isTyping = false;
+    }
+
+    // Apply formatting to typed text
+    applyFormattingToLines(elements, textLines, parsedContainer) {
+        const fullHTML = parsedContainer.innerHTML;
+        const plainText = parsedContainer.textContent || parsedContainer.innerText;
+        
+        let charOffset = 0;
+        
+        for (let lineIndex = 0; lineIndex < elements.length && lineIndex < textLines.length; lineIndex++) {
+            const element = elements[lineIndex];
+            const lineText = textLines[lineIndex];
+            
+            if (!lineText) continue;
+            
+            // Extract the formatted HTML for this line
+            const lineHTML = this.extractFormattedLineHTML(
+                fullHTML, 
+                plainText, 
+                charOffset, 
+                charOffset + lineText.length
+            );
+            
+            if (lineHTML && lineHTML !== lineText) {
+                element.innerHTML = lineHTML;
+                
+                // Initialize glitch effects in this line
+                const glitchContainers = element.querySelectorAll('.glitch-container');
+                glitchContainers.forEach(container => {
+                    const config = JSON.parse(container.dataset.glitchConfig);
+                    const glitchEffect = new GlitchTextEffect(container, config);
+                    this.glitchEffects.push(glitchEffect);
+                });
+            }
+            
+            charOffset += lineText.length;
+        }
+    }
+
+    // Extract formatted HTML for a specific character range
+    extractFormattedLineHTML(fullHTML, fullPlainText, startIndex, endIndex) {
+        // Create a temporary container to work with
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = fullHTML;
+        
+        const targetText = fullPlainText.substring(startIndex, endIndex);
+        
+        // Simple case: if no special formatting, return plain text
+        if (!fullHTML.includes('<')) {
+            return targetText;
+        }
+        
+        // Walk through the parsed HTML and extract the relevant portion
+        let result = '';
+        let currentIndex = 0;
+        let inRange = false;
+        
+        const walker = document.createTreeWalker(
+            tempDiv,
+            NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+            null,
+            false
+        );
+
+        let node;
+        let openTags = [];
+        
+        while ((node = walker.nextNode())) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.classList && node.classList.contains('glitch-container')) {
+                    const glitchText = node.textContent;
+                    const glitchStart = currentIndex;
+                    const glitchEnd = currentIndex + glitchText.length;
+                    
+                    // Check if this glitch overlaps with our target range
+                    if (glitchEnd > startIndex && glitchStart < endIndex) {
+                        // Close any open tags before the glitch
+                        for (let i = openTags.length - 1; i >= 0; i--) {
+                            result += `</${openTags[i]}>`;
+                        }
+                        
+                        // Add the glitch container
+                        result += node.outerHTML;
+                        
+                        // Reopen the tags after the glitch
+                        for (const tag of openTags) {
+                            if (tag === 'span') {
+                                result += `<span style="text-decoration: underline;">`;
+                            } else {
+                                result += `<${tag}>`;
+                            }
+                        }
+                    }
+                    
+                    currentIndex += glitchText.length;
+                } else {
+                    // Regular formatting tag (strong, em, span)
+                    const tagName = node.tagName.toLowerCase();
+                    
+                    if (currentIndex < endIndex && currentIndex + (node.textContent || '').length > startIndex) {
+                        if (tagName === 'span' && node.style.textDecoration === 'underline') {
+                            result += '<span style="text-decoration: underline;">';
+                        } else {
+                            result += `<${tagName}>`;
+                        }
+                        openTags.push(tagName);
+                    }
+                }
+            } else if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                
+                for (let i = 0; i < text.length; i++) {
+                    if (currentIndex >= startIndex && currentIndex < endIndex) {
+                        result += text[i];
+                    }
+                    currentIndex++;
+                }
+            }
+        }
+        
+        // Close any remaining open tags
+        for (let i = openTags.length - 1; i >= 0; i--) {
+            result += `</${openTags[i]}>`;
+        }
+        
+        return result || targetText;
+    }
+
     // Typewriter text effect
     async typeText(element, text) {
         this.isTyping = true;
@@ -612,10 +788,27 @@ class DialogFramework {
                     finalText = `"${scene.text}"`;
                 }
 
-                const textLines = this.wrapTextToLines(finalText, 2);
+                // Check if text has formatting
+                const hasFormatting = finalText.includes('<');
+                
+                if (hasFormatting) {
+                    // Handle formatted text
+                    const parsedContainer = this.parseFormattedText(finalText);
+                    const plainText = parsedContainer.textContent || parsedContainer.innerText;
+                    const textLines = this.wrapTextToLines(plainText, 2);
 
-                textLine1.textContent = textLines[0] || '';
-                textLine2.textContent = textLines[1] || '';
+                    // Set plain text first
+                    textLine1.textContent = textLines[0] || '';
+                    textLine2.textContent = textLines[1] || '';
+
+                    // Then apply formatting
+                    this.applyFormattingToLines([textLine1, textLine2], textLines, parsedContainer);
+                } else {
+                    // Simple text without formatting
+                    const textLines = this.wrapTextToLines(finalText, 2);
+                    textLine1.textContent = textLines[0] || '';
+                    textLine2.textContent = textLines[1] || '';
+                }
             }
         }
     }

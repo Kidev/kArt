@@ -53,7 +53,7 @@ function setupScene() {
             delay: 0,
             speaker: 'Andrew',
             image: 'guilty.png',       // Same image - no fade transition!
-            text: 'But I keep coming when you call (coming when you call)',
+            text: 'But I keep coming when you call <i>(coming when you call)</i>',
             sound: '',
             censorSpeaker: false,  // Speaker name will NOT have glitch effect
             fade: false                // Quick text change, no dialog fade
@@ -62,7 +62,7 @@ function setupScene() {
             delay: 1000,
             speaker: 'Ashley',
             image: 'ashley_response.png',
-            text: 'You always do what I want.',
+            text: 'You <b>always</b> do what I want.',
             sound: '',
             soundVolume: 0.7,
             censorSpeaker: true,   // Speaker name will have glitch effect
@@ -72,7 +72,7 @@ function setupScene() {
             delay: 0,
             speaker: 'Ashley',
             image: 'ashley_response.png', // Same image again - optimized!
-            text: 'That\'s why I love you, brother.',
+            text: 'That\'s why I <u>love</u> you, brother.',
             censorSpeaker: false,  // Speaker name will NOT have glitch effect  
             fade: false                 // No dialog box fade for quick response
         })
@@ -80,13 +80,14 @@ function setupScene() {
             delay: 500,
             speaker: '',
             image: 'mystery.png',
-            text: 'The CENSORED DATA was never meant to be seen.',
+            text: 'The <glitch>CENSORED DATA</glitch> was never meant to be seen.',
             fade: true
         })
         .addScene({
             delay: 0,
             speaker: 'Ashley',
-            text: 'What was that strange noise?',
+            text: 'What was that <glitch color="#ff00ff" scrambled="#ff0000" speed="100">strange noise</glitch>?',
+            censorSpeaker: true,
             fade: false
         });
 }
@@ -115,11 +116,19 @@ function setupScene() {
  - Default is true if not specified
  - Only affects character names, not dialog text
 
- text: string
+ text: string (with formatting support)
  - The dialog text to display
  - Automatically wraps to fit 2 lines (~75 chars per line)
  - Leave empty '' to show no dialog box
- - HTML formatting support (bold, italic, underline, glitch) coming soon!
+ - Supports HTML-like formatting tags:
+   * <b>bold text</b> - Makes text bold
+   * <i>italic text</i> - Makes text italic  
+   * <u>underlined text</u> - Underlines text
+   * <glitch>scrambled text</glitch> - Applies glitch censor effect
+   * <glitch color="#00ff00" scrambled="#ff0000" speed="120">custom glitch</glitch>
+     - color: Normal text color when revealed
+     - scrambled: Color of scrambled characters
+     - speed: Change speed in milliseconds
 
  fade: boolean (true/false)
  - true = smooth fade transitions for dialog box
@@ -138,21 +147,29 @@ function setupScene() {
  - Default is 1.0 if not specified
  - Good for balancing different audio levels
 
+ FORMATTING EXAMPLES:
+ text: 'This is <b>bold</b> and <i>italic</i> text.'
+ text: 'I <u>really</u> mean it!'
+ text: 'The password is <glitch>SECRET123</glitch>.'
+ text: 'Something <glitch color="#00ff00" scrambled="#ff0000">weird</glitch> happened.'
+
  SPEAKER CENSORING EXAMPLES:
  censorSpeaker: true   // Character name gets glitch effect (default)
  censorSpeaker: false  // Character name appears normally
 
  GLITCH EFFECT FEATURES:
  - Character names can have optional glitch effects (controlled by censorSpeaker)
+ - Dialog text can have custom glitch effects with <glitch> tags
  - Glitch effects use monospace font for stable layout (no text jumping)
  - Each glitch effect runs independently and cleans up automatically
- - HTML formatting for dialog text (bold, italic, glitch) coming in future update!
+ - Formatting is applied after typewriter effect completes for smooth animation
 
  PERFORMANCE NOTES:
  - Images: Framework detects repeated images and skips fade animation
  - Audio: Sounds are cached after first load for better performance  
  - Dialog: Smooth typewriter animation with proper spacing
  - Glitch: Monospace font prevents layout shifting during character changes
+ - Formatting: HTML tags are applied after typing completes for smooth animation
  
  FOLDER STRUCTURE:
  project/
