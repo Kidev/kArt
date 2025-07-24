@@ -157,6 +157,8 @@ class DialogFramework {
         this.currentText = '';
         this.typingTimeout = null;
         this.currentBackgroundImage = null;
+        this.currentBustLeft = null;
+        this.currentBustRight = null;
         this.loadedSounds = new Map();
         this.glitchEffects = [];
         this.speakerGlitch = null;
@@ -314,7 +316,16 @@ class DialogFramework {
             sound: options.sound || null,
             soundVolume: options.soundVolume || 1.0,
             soundDelay: options.soundDelay || 0,
-            censorSpeaker: options.censorSpeaker !== undefined ? options.censorSpeaker : true
+            censorSpeaker: options.censorSpeaker !== undefined ? options.censorSpeaker : true,
+
+            bustLeft: options.bustLeft !== undefined ? options.bustLeft : null,
+            bustRight: options.bustRight !== undefined ? options.bustRight : null,
+            bustFade: options.bustFade !== undefined ? options.bustFade : 0,
+
+            shake: options.shake !== undefined ? options.shake : false,
+            shakeDelay: options.shakeDelay !== undefined ? options.shakeDelay : 0,
+            shakeIntensity: options.shakeIntensity !== undefined ? options.shakeIntensity : 1,
+            shakeDuration: options.shakeDuration !== undefined ? options.shakeDuration : 500
         };
 
         this.scenes.push(scene);
@@ -359,7 +370,6 @@ class DialogFramework {
         const scene = this.scenes[index];
         const previousScene = index > 0 ? this.scenes[index - 1] : null;
 
-        // Schedule sound playback with delay if specified
         if (scene.sound) {
             if (scene.soundDelay > 0) {
                 setTimeout(() => {
@@ -369,6 +379,18 @@ class DialogFramework {
                 this.playSound(scene.sound, scene.soundVolume);
             }
         }
+
+        if (scene.shake) {
+            if (scene.shakeDelay > 0) {
+                setTimeout(() => {
+                    this.triggerShake(scene.shakeIntensity, scene.shakeDuration);
+                }, scene.shakeDelay);
+            } else {
+                this.triggerShake(scene.shakeIntensity, scene.shakeDuration);
+            }
+        }
+
+        this.handleBustTransitions(scene, previousScene);
 
         // IMAGE TIMELINE
         if (previousScene) {
@@ -415,7 +437,6 @@ class DialogFramework {
                             }
                     } else {
                         // When scene.image is null, ensure any remaining images are hidden
-                        // This handles the case where we're transitioning to a scene with no image
                         this.currentBackgroundImage = null;
                         // Make sure all images are properly faded out
                         const remainingImages = document.querySelectorAll('.background-image.active');
@@ -438,7 +459,7 @@ class DialogFramework {
             }, scene.imageDelayIn || 0);
         }
 
-        // DIALOG TIMELINE (unchanged)
+        // DIALOG TIMELINE
         if (previousScene) {
             // Scene > 0: wait for previous scene's out delays/fades first
             let dialogOutDelay = previousScene.dialogDelayOut || 0;
@@ -491,6 +512,138 @@ class DialogFramework {
         }
 
         this.updateDebugInfo();
+    }
+
+    triggerShake(intensity = 1, duration = 500) {
+        const gameContainer = document.querySelector('.game-container');
+
+        const styleId = 'shake-style-' + Date.now();
+        const style = document.createElement('style');
+        style.id = styleId;
+
+        const baseShake = 10 * intensity;
+        const halfShake = 5 * intensity;
+        const smallShake = 2 * intensity;
+
+        style.textContent = `
+        @keyframes shake-${styleId} {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-${baseShake}px, -${halfShake}px); }
+            20% { transform: translate(${baseShake}px, -${halfShake}px); }
+            30% { transform: translate(-${baseShake}px, ${halfShake}px); }
+            40% { transform: translate(${baseShake}px, ${halfShake}px); }
+            50% { transform: translate(-${halfShake}px, -${baseShake}px); }
+            60% { transform: translate(${halfShake}px, -${baseShake}px); }
+            70% { transform: translate(-${halfShake}px, ${baseShake}px); }
+            80% { transform: translate(${halfShake}px, ${baseShake}px); }
+            90% { transform: translate(-${smallShake}px, -${smallShake}px); }
+        }
+
+        .game-container.shake-${styleId} {
+            animation: shake-${styleId} ${duration}ms ease-in-out;
+        }
+        `;
+
+        document.head.appendChild(style);
+        gameContainer.classList.add(`shake-${styleId}`);
+
+        setTimeout(() => {
+            gameContainer.classList.remove(`shake-${styleId}`);
+            style.remove();
+        }, duration);
+    }
+
+    handleBustTransitions(scene, previousScene) {
+        if (previousScene && previousScene.bustLeft !== scene.bustLeft) {
+            if (previousScene.bustLeft) {
+                this.hideBust('left', previousScene.bustFade || 200);
+            }
+            if (scene.bustLeft) {
+                setTimeout(() => {
+                    this.showBust('left', scene.bustLeft, scene.bustFade || 200);
+                }, previousScene && previousScene.bustLeft ? (previousScene.bustFade || 200) : 0);
+            }
+        } else if (!previousScene && scene.bustLeft) {
+            this.showBust('left', scene.bustLeft, scene.bustFade || 200);
+        }
+
+        if (previousScene && previousScene.bustRight !== scene.bustRight) {
+            if (previousScene.bustRight) {
+                this.hideBust('right', previousScene.bustFade || 200);
+            }
+            if (scene.bustRight) {
+                setTimeout(() => {
+                    this.showBust('right', scene.bustRight, scene.bustFade || 200);
+                }, previousScene && previousScene.bustRight ? (previousScene.bustFade || 200) : 0);
+            }
+        } else if (!previousScene && scene.bustRight) {
+            this.showBust('right', scene.bustRight, scene.bustFade || 200);
+        }
+    }
+
+    showBust(side, imageSrc, fadeTime = 0) {
+        if (side === 'left') {
+            this.currentBustLeft = imageSrc;
+        } else {
+            this.currentBustRight = imageSrc;
+        }
+
+        const existingBust = document.querySelector(`.bust-image.${side}`);
+        if (existingBust) {
+            existingBust.remove();
+        }
+
+        const img = document.createElement('img');
+        img.src = 'img/' + imageSrc;
+        img.className = `bust-image ${side}`;
+
+        if (fadeTime > 0) {
+            img.style.transition = `opacity ${fadeTime}ms ease-in-out`;
+            img.style.opacity = '0';
+        } else {
+            img.style.transition = 'none';
+            img.style.opacity = '1';
+        }
+
+        document.querySelector('.game-container').appendChild(img);
+
+        img.onload = () => {
+            if (fadeTime > 0) {
+                img.offsetHeight;
+                requestAnimationFrame(() => {
+                    img.style.opacity = '1';
+                });
+            }
+        };
+
+        img.onerror = () => {
+            console.warn(`Failed to load bust image: ${imageSrc}`);
+        };
+
+        if (img.complete) {
+            img.onload();
+        }
+    }
+
+    hideBust(side, fadeTime = 0) {
+        const bust = document.querySelector(`.bust-image.${side}`);
+        if (!bust) return;
+
+        if (side === 'left') {
+            this.currentBustLeft = null;
+        } else {
+            this.currentBustRight = null;
+        }
+
+        if (fadeTime > 0) {
+            bust.style.transition = `opacity ${fadeTime}ms ease-in-out`;
+            bust.style.opacity = '0';
+            setTimeout(() => {
+                bust.remove();
+            }, fadeTime);
+        } else {
+            bust.remove();
+        }
     }
 
     showImage(imageSrc, fadeInTime = 200, fadeOutTime = 200) {
@@ -1071,11 +1224,16 @@ class DialogFramework {
         this.currentScene = 0;
         this.isTyping = false;
         this.currentBackgroundImage = null;
+        this.currentBustLeft = null;
+        this.currentBustRight = null;
         this.cleanupGlitchEffects();
         this.hideDialog();
 
         const images = document.querySelectorAll('.background-image');
         images.forEach(img => img.remove());
+
+        const busts = document.querySelectorAll('.bust-image');
+        busts.forEach(bust => bust.remove());
 
         this.updateDebugInfo();
     }

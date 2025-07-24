@@ -24,6 +24,15 @@ function setupScene() {
             },
             'Something Kind': {
                 color: '#934a4f'
+            },
+            'Cultist': {
+                color: '#b3ba78'
+            },
+            'Cultists': {
+                color: '#ffffff'
+            },
+            '???': {
+                color: '#934a4f'
             }
         });
 
@@ -39,85 +48,221 @@ function setupScene() {
 
     dialogFramework
         .addScene({
-            image: 'cry.png',
-            speaker: 'Alex',
-            text: "I wouldn't have rotted from the inside out...",
-            censorSpeaker: true,
-            dialogFadeInTime: 500,
-            dialogFadeOutTime: 500,
-            imageFadeInTime: 500,
-            imageFadeOutTime: 500,
-            dialogDelayIn: 800,
-            dialogDelayOut: 0,
-            imageDelayIn: 0,
-            imageDelayOut: 0
-        })
-        .addScene({
-            image: 'pat.png',
-            speaker: 'Something Terrifying',
-            text: 'That must have been tough.',
+            image: '',
+            speaker: 'Cultist',
+            text: "Ok turn on the music!",
             censorSpeaker: false,
-            dialogFadeInTime: 500,
-            dialogFadeOutTime: 500,
-            imageFadeInTime: 500,
-            imageFadeOutTime: 500,
-            dialogDelayIn: 800,
-            dialogDelayOut: 0,
-            imageDelayIn: 0,
-            imageDelayOut: 0
-        })
-        .addScene({
-            speaker: 'Alex',
-            image: 'patsad1.png',
-            text: ' .............. ',
-            censorSpeaker: true,
             dialogFadeInTime: 500,
             dialogFadeOutTime: 0,
-            imageFadeInTime: 500,
+            imageFadeInTime: 0,
             imageFadeOutTime: 0,
-            dialogDelayIn: 300,
+            dialogDelayIn: 800,
             dialogDelayOut: 0,
             imageDelayIn: 0,
             imageDelayOut: 0
         })
         .addScene({
-            speaker: 'Something Kind',
-            image: 'patsad1.png',
-            text: 'It will be alright now.',
+            image: '',
+            speaker: 'Cultist',
+            text: "All together now!",
             censorSpeaker: false,
             dialogFadeInTime: 0,
-            dialogFadeOutTime: 500,
-            imageFadeInTime:0,
-            imageFadeOutTime: -500,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
             dialogDelayIn: 0,
             dialogDelayOut: 0,
             imageDelayIn: 0,
             imageDelayOut: 0
         })
         .addScene({
-            speaker: 'Alex',
-            image: 'patsad2.png',
-            text: ' . . . . . . . . . . . . . . . ',
-            censorSpeaker: true,
-            dialogFadeInTime: 500,
-            dialogFadeOutTime: 500,
-            imageFadeInTime: -500,
-            imageFadeOutTime: 500,
-            dialogDelayIn: 800,
+            image: 'summon.gif',
+            speaker: 'Cultists',
+            text: "SHOW YOURSELF, DEMON!!",
+            censorSpeaker: false,
+            dialogFadeInTime: 100,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 100,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            shake: true,
+            shakeDuration: 250,
+            shakeIntensity: 0.5,
+            shakeDelay: 100
+        })
+        .addScene({
+            image: 'summon.gif',
+            speaker: 'Cultist',
+            text: "This is such fun!!",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
             dialogDelayOut: 0,
             imageDelayIn: 0,
             imageDelayOut: 0
         })
         .addScene({
-            speaker: '',
-            image: null,
-            text: 'Suddendly you understand why people join cults.',
+            image: 'summon.gif',
+            speaker: 'Cultists',
+            text: "REVEAL YOURSELF TO US, DEMON!!",
             censorSpeaker: false,
-            dialogFadeInTime: 200,
-            dialogFadeOutTime: 200,
-            imageFadeInTime: 200,
-            imageFadeOutTime: 200,
-            dialogDelayIn: 800,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            shake: true,
+            shakeDuration: 250,
+            shakeIntensity: 0.5
+        })
+        .addScene({
+            image: 'ritual.png',
+            speaker: 'Ashley',
+            text: "Suckers-giving-their-souls-for-free-say-WHAT?!",
+            censorSpeaker: false,
+            dialogFadeInTime: 500,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 500,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 500,
+            dialogDelayOut: 0,
+            imageDelayIn: 2000,
+            imageDelayOut: 0
+        })
+        .addScene({
+            image: 'what.gif',
+            speaker: 'Cultists',
+            text: "WHAT???",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            shake: true,
+            shakeDuration: 500,
+            shakeIntensity: 0.5
+        })
+        .addScene({
+            image: 'summoned.gif',
+            speaker: 'Cultists',
+            text: "WHO THE HELL ARE YOU??",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            shake: true,
+            shakeDuration: 500,
+            shakeIntensity: 0.5
+        })
+        .addScene({
+            image: 'summoned.gif',
+            speaker: 'Ashley',
+            text: "The new hire",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            bustRight: 'ashley_talk.png'
+        })
+        .addScene({
+            image: 'summoned.gif',
+            speaker: 'Cultists',
+            text: "GO AWAY VILE USURPER!!",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            shake: true,
+            shakeDuration: 500,
+            shakeIntensity: 0.5
+        })
+        .addScene({
+            image: 'summoned.gif',
+            speaker: 'Ashley',
+            text: "After you, gentlemen.",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            bustRight: 'ashley_smug.png',
+            bustFade: 0,
+        })
+        .addScene({
+            image: 'summoned.gif',
+            speaker: 'Ashley',
+            text: "PERISH",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 0,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 0,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0,
+            bustRight: 'ashley_fed_up.png',
+            bustFade: 0,
+            shake: true,
+            shakeDuration: 250,
+            shakeIntensity: 0.5
+        })
+        .addScene({
+            image: 'take_souls.gif',
+            speaker: '',
+            text: "",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 500,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 500,
+            dialogDelayIn: 0,
+            dialogDelayOut: 0,
+            imageDelayIn: 0,
+            imageDelayOut: 0
+        })
+        .addScene({
+            image: '',
+            speaker: '???',
+            text: "TaR SouL... YoU tReAd a pAtH i nEveR daRed To cHaRt",
+            censorSpeaker: false,
+            dialogFadeInTime: 0,
+            dialogFadeOutTime: 500,
+            imageFadeInTime: 0,
+            imageFadeOutTime: 500,
+            dialogDelayIn: 0,
             dialogDelayOut: 0,
             imageDelayIn: 0,
             imageDelayOut: 0

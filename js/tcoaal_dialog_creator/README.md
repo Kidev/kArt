@@ -107,9 +107,14 @@ dialogFramework.addScene({
 
 ```javascript
 dialogFramework.addScene({
-    image: 'forest.png',
+    image: 'forest.png',  // Background image, can be animated
     speaker: 'Bob',
     text: 'The forest looks mysterious tonight...',
+    
+    // Busts
+    bustLeft: 'andrew_happy.png',  // Image displayed as left speaker bust
+    bustRight: 'ashley_laugh.png',  // Image displayed as right speaker bust
+    bustFade: 0,  // Fade in and fade out time used for busts
 
     // Dialog timing
     dialogFadeInTime: 500,  // Fade in dialog over 500ms
@@ -129,7 +134,13 @@ dialogFramework.addScene({
     soundDelay: 500,  // Wait 500ms before playing
 
     // Speaker effects
-    censorSpeaker: true  // Apply glitch effect to speaker name
+    censorSpeaker: true,  // Apply glitch effect to speaker name
+    
+    // Shake effect
+    shake: false,  // Apply shake or not at beginning of scene
+    shakeDelay: 0,  // Delay after beginning of scene to shake
+    shakeIntensity: 1,  // Intensity of the shake, 1 is default, 0.5 is half as strong...
+    shakeDuration: 500  // Duration of the shake
 });
 ```
 
