@@ -16,7 +16,7 @@ For the projects not listed here, it's most likely that they were made entirely 
 - [Pixel art (tool)](./python/pixel_art/) [:octocat:️️](https://github.com/Kidev/Kerfur)
 
 #### Made with pure JavaScript
-- [TCOAAL easy dialog generator (tool)](./js/tcoaal_dialog_creator/) :octocat:️️
+- [TCOAAL easy dialog creator (tool)](https://github.com/Kidev/TCOAALDialogCreator) :octocat:️️
 
 ## Licenses
 All artworks are licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0)  
